@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5100;
+require('dotenv').config()
 
 
 app.use(cors());    
@@ -13,11 +14,9 @@ app.get("/", (req, res) => {
   res.send("simple crud is running");
 });
 
-// studyHub
-// Mpcx4Z6hbKdS1aSU
 
 
-const uri = "mongodb+srv://studyHub:Mpcx4Z6hbKdS1aSU@cluster0.uotm6ic.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.USERDB}:${process.env.USERPASS}@cluster0.uotm6ic.mongodb.net/?retryWrites=true&w=majority`;
 
 
 const client = new MongoClient(uri, {
@@ -36,12 +35,20 @@ async function run() {
     const AssignmentCollection = database.collection("Assignment");
 
 
-    app.post("/assignments", async (req, res) => {
+    app.post("/assignments" , async (req, res) => {
         const data = req.body;
         console.log(data);
         const result = await AssignmentCollection.insertOne(data);
         res.send(result);
       });
+
+    
+    app.get("/assignments" , async (req , res) => {
+
+        const cursor = AssignmentCollection.find()
+        const result = await cursor.toArray()
+        res.send(result)        
+    })
 
     
   
