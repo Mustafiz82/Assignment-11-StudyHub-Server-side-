@@ -34,7 +34,9 @@ async function run() {
 
     const database = client.db("AssignmentDB");
     const AssignmentCollection = database.collection("Assignment");
+    const SubmittedAssignmentCollection = database.collection("SubmittedAssignment");
 
+    //  create operation 
 
     app.post("/assignments" , async (req, res) => {
         const data = req.body;
@@ -43,6 +45,7 @@ async function run() {
         res.send(result);
       });
 
+    //   read operation
     
     app.get("/assignments" , async (req , res) => {
 
@@ -51,17 +54,57 @@ async function run() {
         res.send(result)        
     })
 
+    //  specefic data read operation
 
     app.get("/assignments/:id" , async(req , res) =>{
         const id = req.params.id
-        console.log(id);
+        // console.log(id);
         const query = {_id : new ObjectId(id)}
         const result = await AssignmentCollection.findOne(query);
         res.send(result)
   
-  
-  
       })
+
+
+    //  update operation
+
+    app.put('/assignments/:id' ,async(req , res) =>{
+        const id = req.params.id
+        const updateAssignment = req.body
+        console.log(id ,updateAssignment) 
+
+        
+
+      const filter = { _id : new ObjectId(id) };
+      const options ={ upsert: true };
+      const updateDoc = {
+        $set: {
+            creatorEmail: updateAssignment.creatorEmail,
+            dueDate: updateAssignment.dueDate,
+            description: updateAssignment.description,
+            marks: updateAssignment.marks,
+            imageURL: updateAssignment.imageURL,
+            difficulty: updateAssignment.difficulty
+        },
+      };
+
+      console.log(updateDoc);
+
+
+        const result = await AssignmentCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+   
+      })
+
+    //   submitted Assignment create operation
+
+    app.post("/submittedAssignments" , async (req, res) => {
+        const data = req.body;
+        console.log(data);
+        const result = await SubmittedAssignmentCollection.insertOne(data);
+        res.send(result);
+      });
+  
   
 
 
