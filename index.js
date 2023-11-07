@@ -104,8 +104,22 @@ async function run() {
         const result = await SubmittedAssignmentCollection.insertOne(data);
         res.send(result);
       });
+
+
+
+        //   submitted Assignment read operation
+
+        app.get("/submittedAssignments" , async (req , res) => {
+
+        const query = { status: "pending" };     
+        const cursor = SubmittedAssignmentCollection.find(query)
+
+        const result = await cursor.toArray()
+        res.send(result)
+    })
+
   
-  
+    
 
 
 
