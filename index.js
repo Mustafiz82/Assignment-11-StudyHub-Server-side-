@@ -1,149 +1,152 @@
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5100;
-require('dotenv').config()
+require("dotenv").config();
 
-
-app.use(cors());    
+app.use(cors());
 app.use(express.json());
 
-
 app.get("/", (req, res) => {
-  res.send("simple crud is running");
+	res.send("simple crud is running");
 });
-
-
 
 const uri = `mongodb+srv://${process.env.USERDB}:${process.env.USERPASS}@cluster0.uotm6ic.mongodb.net/?retryWrites=true&w=majority`;
 
-
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+	serverApi: {
+		version: ServerApiVersion.v1,
+		strict: true,
+		deprecationErrors: true,
+	},
 });
 
-
 async function run() {
-  try {
-    await client.connect();
+	try {
+		await client.connect();
 
-    const database = client.db("AssignmentDB");
-    const AssignmentCollection = database.collection("Assignment");
-    const SubmittedAssignmentCollection = database.collection("SubmittedAssignment");
+		const database = client.db("AssignmentDB");
+		const AssignmentCollection = database.collection("Assignment");
+		const SubmittedAssignmentCollection = database.collection(
+			"SubmittedAssignment"
+		);
 
-    //  create operation 
+		//  create operation
 
-    app.post("/assignments" , async (req, res) => {
-        const data = req.body;
-        console.log(data);
-        const result = await AssignmentCollection.insertOne(data);
-        res.send(result);
-      });
+		app.post("/assignments", async (req, res) => {
+			const data = req.body;
+			console.log(data);
+			const result = await AssignmentCollection.insertOne(data);
+			res.send(result);
+		});
 
-    //   read operation
-    
-    app.get("/assignments" , async (req , res) => {
+		//   read operation
 
-        const cursor = AssignmentCollection.find()
-        const result = await cursor.toArray()
-        res.send(result)        
-    })
+		app.get("/assignments", async (req, res) => {
+			const cursor = AssignmentCollection.find();
+			const result = await cursor.toArray();
+			res.send(result);
+		});
 
-    //  specefic data read operation
+		//  specefic data read operation
 
-    app.get("/assignments/:id" , async(req , res) =>{
-        const id = req.params.id
-        // console.log(id);
-        const query = {_id : new ObjectId(id)}
-        const result = await AssignmentCollection.findOne(query);
-        res.send(result)
-  
-      })
+		app.get("/assignments/:id", async (req, res) => {
+			const id = req.params.id;
+			// console.log(id);
+			const query = { _id: new ObjectId(id) };
+			const result = await AssignmentCollection.findOne(query);
+			res.send(result);
+		});
 
+		//  update operation
 
-    //  update operation
+		app.put("/assignments/:id", async (req, res) => {
+			const id = req.params.id;
+			const updateAssignment = req.body;
+			console.log(id, updateAssignment);
 
-    app.put('/assignments/:id' ,async(req , res) =>{
-        const id = req.params.id
-        const updateAssignment = req.body
-        console.log(id ,updateAssignment) 
+			const filter = { _id: new ObjectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					creatorEmail: updateAssignment.creatorEmail,
+					dueDate: updateAssignment.dueDate,
+					description: updateAssignment.description,
+					marks: updateAssignment.marks,
+					imageURL: updateAssignment.imageURL,
+					difficulty: updateAssignment.difficulty,
+				},
+			};
 
-        
+			console.log(updateDoc);
 
-      const filter = { _id : new ObjectId(id) };
-      const options ={ upsert: true };
-      const updateDoc = {
-        $set: {
-            creatorEmail: updateAssignment.creatorEmail,
-            dueDate: updateAssignment.dueDate,
-            description: updateAssignment.description,
-            marks: updateAssignment.marks,
-            imageURL: updateAssignment.imageURL,
-            difficulty: updateAssignment.difficulty
-        },
-      };
+			const result = await AssignmentCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			res.send(result);
+		});
 
-      console.log(updateDoc);
+		//   submitted Assignment create operation
 
+		app.post("/submittedAssignments", async (req, res) => {
+			const data = req.body;
+			console.log(data);
+			const result = await SubmittedAssignmentCollection.insertOne(data);
+			res.send(result);
+		});
 
-        const result = await AssignmentCollection.updateOne(filter, updateDoc, options);
-        res.send(result)
-   
-      })
+		//   submitted Assignment read operation
 
-    //   submitted Assignment create operation
+		app.get("/submittedAssignments", async (req, res) => {
+			const query = { status: "pending" };
+			const cursor = SubmittedAssignmentCollection.find(query);
 
-    app.post("/submittedAssignments" , async (req, res) => {
-        const data = req.body;
-        console.log(data);
-        const result = await SubmittedAssignmentCollection.insertOne(data);
-        res.send(result);
-      });
+			const result = await cursor.toArray();
+			res.send(result);
+		});
 
+		// find each Submitted Assgnment
 
+		app.put("/submittedAssignments/:id", async (req, res) => {
+			const id = req.params.id; // Get the ID from the route parameters
+			const updateSubmitAssignment = req.body;
+			console.log(id, updateSubmitAssignment);
 
-        //   submitted Assignment read operation
+			const filter = { _id: new ObjectId(id) };
+			console.log(filter);
 
-        app.get("/submittedAssignments" , async (req , res) => {
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					status: updateSubmitAssignment.status,
+					ObtainMarks: updateSubmitAssignment.ObtainMarks,
+					feedback: updateSubmitAssignment.feedback,
+				},
+			};
 
-        const query = { status: "pending" };     
-        const cursor = SubmittedAssignmentCollection.find(query)
+			//   console.log(updateDoc);
 
-        const result = await cursor.toArray()
-        res.send(result)
-    })
+			const result = await SubmittedAssignmentCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			res.send(result);
+		});
 
-  
-    
-
-
-
-    
-  
-
-
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-
-  } finally {
-
-    // await client.close();
-  }
+		await client.db("admin").command({ ping: 1 });
+		console.log(
+			"Pinged your deployment. You successfully connected to MongoDB!"
+		);
+	} finally {
+		// await client.close();
+	}
 }
 run().catch(console.dir);
 
-
-
-
-
-
 app.listen(port, () => {
-  console.log(`simple crud is running on ${port}`);
+	console.log(`simple crud is running on ${port}`);
 });
-
-
