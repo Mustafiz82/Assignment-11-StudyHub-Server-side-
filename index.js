@@ -5,8 +5,12 @@ const app = express();
 const port = process.env.PORT || 5100;
 require("dotenv").config();
 
+
+
 app.use(cors());
 app.use(express.json());
+
+
 
 app.get("/", (req, res) => {
 	res.send("simple crud is running");
@@ -24,7 +28,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
 	try {
-		await client.connect();
+		// await client.connect();
 
 		const database = client.db("AssignmentDB");
 		const AssignmentCollection = database.collection("Assignment");
@@ -64,45 +68,41 @@ async function run() {
 			const result = await AssignmentCollection.findOne(query);
 			res.send(result);
 		});
-
+ 
 		// Delete  Operation of Assignmet
 
 		app.delete("/assignments/:id", async (req, res) => {
-
 			const id = req.params.id;
 			const { email } = req.query;
 
+            // console.log("id is " , id);
+            // console.log("email  is " , email);
+
 			const query = { _id: new ObjectId(id) };
-            console.log(id);
+			console.log(id , email);
 			// const result = await AssignmentCollection.findOne(query);
 			const result = await AssignmentCollection.findOne(query);
 
-			console.log("delete result find : " , result);
+			console.log("delete result find : ", result);
 
-            if (!result) {
-                console.log("no item found")
-                return res.status(404).json({ message: "Assignment not found" });
-              }
+			if (!result) {
+				console.log("no item found");
+				return res
+					.status(404)
+					.json({ message: "Assignment not found" });
+			}
 
-            if(email == result?.creatorEmail){
-               
-                const deleteResult = await AssignmentCollection.deleteOne(query);
-                res.send(deleteResult)
-            }
-            else{
-                return res.status(403).json({ message: "Access denied. Email does not match." });
-            }
+			if (email == result?.creatorEmail) {
+				const deleteResult = await AssignmentCollection.deleteOne(
+					query
+				);
+				res.send(deleteResult);
+			} else {
+				return res
+					.status(403)
+					.json({ message: "Access denied. Email does not match." });
+			}
 
-            // const deleteResult = await AssignmentCollection.deleteOne(query);
-            // res.send(deleteResult)
-			// const query = {_id : new ObjectId(id)}
-
-			// const data =
-
-			// query to select which data need to be delete if not used
-			// all data will be deleted
-			// const result = await AssignmentCollection.deleteOne(query);
-			// res.send(result)
 		});
 
 		//  update operation
@@ -192,10 +192,29 @@ async function run() {
 			res.send(result);
 		});
 
+		// pagination
 
-        // 
+		app.get("/AssignmentCount", async (req, res) => {
+			const count = await AssignmentCollection.estimatedDocumentCount();
+			res.send({ count });
+		});
 
-		await client.db("admin").command({ ping: 1 });
+		app.get("/AssignmentPage", async (req, res) => {
+			const size = parseInt(req.query.size);
+			const page = parseInt(req.query.page);
+            console.log(req.query);
+
+			const result = await AssignmentCollection
+				.find()
+				.skip(page * size)
+				.limit(size)
+				.toArray();
+			console.log("query of products is", req.query);
+
+			res.send(result);
+		});
+
+		// await client.db("admin").command({ ping: 1 });
 		console.log(
 			"Pinged your deployment. You successfully connected to MongoDB!"
 		);
