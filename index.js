@@ -4,6 +4,7 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5100;
 require("dotenv").config();
+const jwt = require('jsonwebtoken');
 
 
 
@@ -213,6 +214,17 @@ async function run() {
 
 			res.send(result);
 		});
+
+
+		
+
+		app.post("/jwt" , async (req,res ) => {
+			const result = req.body
+			console.log(result);
+			const token = jwt.sign(result , "secret" , {expiresIn: "1h"})
+			res.send(token)
+		  })
+	  
 
 		// await client.db("admin").command({ ping: 1 });
 		console.log(
