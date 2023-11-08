@@ -49,6 +49,12 @@ async function run() {
 			res.send(result);
 		});
 
+		app.get("/featured", async (req, res) => {
+			const cursor = AssignmentCollection.find().skip(8).limit(6);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
 		//  specefic data read operation
 
 		app.get("/assignments/:id", async (req, res) => {
@@ -57,6 +63,46 @@ async function run() {
 			const query = { _id: new ObjectId(id) };
 			const result = await AssignmentCollection.findOne(query);
 			res.send(result);
+		});
+
+		// Delete  Operation of Assignmet
+
+		app.delete("/assignments/:id", async (req, res) => {
+
+			const id = req.params.id;
+			const { email } = req.query;
+
+			const query = { _id: new ObjectId(id) };
+            console.log(id);
+			// const result = await AssignmentCollection.findOne(query);
+			const result = await AssignmentCollection.findOne(query);
+
+			console.log("delete result find : " , result);
+
+            if (!result) {
+                console.log("no item found")
+                return res.status(404).json({ message: "Assignment not found" });
+              }
+
+            if(email == result?.creatorEmail){
+               
+                const deleteResult = await AssignmentCollection.deleteOne(query);
+                res.send(deleteResult)
+            }
+            else{
+                return res.status(403).json({ message: "Access denied. Email does not match." });
+            }
+
+            // const deleteResult = await AssignmentCollection.deleteOne(query);
+            // res.send(deleteResult)
+			// const query = {_id : new ObjectId(id)}
+
+			// const data =
+
+			// query to select which data need to be delete if not used
+			// all data will be deleted
+			// const result = await AssignmentCollection.deleteOne(query);
+			// res.send(result)
 		});
 
 		//  update operation
@@ -122,7 +168,7 @@ async function run() {
 			const updateDoc = {
 				$set: {
 					status: updateSubmitAssignment.status,
-					ObtainMarks: updateSubmitAssignment.ObtainMarks,
+					ObtainMarks: updateSubmitAssignment.obtainMarks,
 					feedback: updateSubmitAssignment.feedback,
 				},
 			};
@@ -136,6 +182,18 @@ async function run() {
 			);
 			res.send(result);
 		});
+
+		app.get("/mySubmittedAssignments", async (req, res) => {
+			const query = req.query;
+			console.log(query);
+			// const query = { userEmail: "md.mustafizrahman8260@gmail.com" };
+			const cursor = SubmittedAssignmentCollection.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
+
+        // 
 
 		await client.db("admin").command({ ping: 1 });
 		console.log(
